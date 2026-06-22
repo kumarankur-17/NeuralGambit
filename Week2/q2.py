@@ -205,13 +205,14 @@ def alpha_beta_pruning(history_obj, alpha, beta, max_player_flag):
 
     valid_actions = history_obj.get_valid_actions()
 
-    # Move ordering: sort actions to improve pruning.
-    # Prefer moves on boards with more X's already (closer to finishing)
-    def move_priority(action):
-        board_num = action // 9
-        return -sum(1 for cell in history_obj.boards[board_num] if cell == 'x')
+    # center -> corners -> edges
+    priority = {
+        4: 0,              # center
+        0: 1, 2: 1, 6: 1, 8: 1,  # corners
+        1: 2, 3: 2, 5: 2, 7: 2   # edges
+    }
 
-    valid_actions = sorted(valid_actions, key=move_priority)
+    valid_actions.sort(key=lambda action: priority[action % 9])
 
     if max_player_flag:
         value = -math.inf
