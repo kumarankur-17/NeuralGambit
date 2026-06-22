@@ -159,20 +159,30 @@ class History:
         return boards_str
 
     def is_win(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        # Returns True if all boards are dead (game over)
+        return sum(self.active_board_stats) == 0
 
     def get_valid_actions(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        actions = []
+        for i in range(self.num_boards):
+            if self.active_board_stats[i] == 1:  # only active boards
+                for j in range(9):
+                    if self.boards[i][j] == '0':  # only empty squares
+                        actions.append(i * 9 + j)
+        return actions
 
     def is_terminal_history(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        return self.is_win()
 
     def get_value_given_terminal_history(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        # current_player is whoever is ABOUT to move
+        # but game is over, so the PREVIOUS player just lost
+        if self.current_player == 1:
+            # player 2 just moved and lost, so player 1 (max) wins
+            return 1
+        else:
+            # player 1 just moved and lost, so player 2 (min) wins
+            return -1
 
 
 def alpha_beta_pruning(history_obj, alpha, beta, max_player_flag):
@@ -189,6 +199,44 @@ def alpha_beta_pruning(history_obj, alpha, beta, max_player_flag):
     # These two already given lines track the visited histories.
     global visited_histories_list
     visited_histories_list.append(history_obj.history)
+
+    if history_obj.is_terminal_history():
+        return history_obj.get_value_given_terminal_history()
+
+    valid_actions = history_obj.get_valid_actions()
+
+    # Move ordering: sort actions to improve pruning.
+    # Prefer moves on boards with more X's already (closer to finishing)
+    def move_priority(action):
+        board_num = action // 9
+        return -sum(1 for cell in history_obj.boards[board_num] if cell == 'x')
+
+    valid_actions = sorted(valid_actions, key=move_priority)
+
+    if max_player_flag:
+        value = -math.inf
+        for action in valid_actions:
+            new_history = History(
+                history=history_obj.history + [action],
+                num_boards=history_obj.num_boards
+            )
+            value = max(value, alpha_beta_pruning(new_history, alpha, beta, False))
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break  # beta cutoff
+        return value
+    else:
+        value = math.inf
+        for action in valid_actions:
+            new_history = History(
+                history=history_obj.history + [action],
+                num_boards=history_obj.num_boards
+            )
+            value = min(value, alpha_beta_pruning(new_history, alpha, beta, True))
+            beta = min(beta, value)
+            if alpha >= beta:
+                break  # alpha cutoff
+        return value
     # TODO implement
     return -2
     # TODO implement
@@ -206,6 +254,40 @@ def maxmin(history_obj, max_player_flag):
     # self.boards and value represents the maxmin value. Use the get_boards_str function in History class to get
     # the key corresponding to self.boards.
     global board_positions_val_dict
+
+    # Check if terminal
+    if history_obj.is_terminal_history():
+        return history_obj.get_value_given_terminal_history()
+
+    # Check memo table using board state (not history)
+    board_key = history_obj.get_boards_str()
+    if board_key in board_positions_val_dict:
+        return board_positions_val_dict[board_key]
+
+    valid_actions = history_obj.get_valid_actions()
+
+    if max_player_flag:
+        best_value = -math.inf
+        for action in valid_actions:
+            new_history = History(
+                history=history_obj.history + [action],
+                num_boards=history_obj.num_boards
+            )
+            value = maxmin(new_history, False)
+            best_value = max(best_value, value)
+    else:
+        best_value = math.inf
+        for action in valid_actions:
+            new_history = History(
+                history=history_obj.history + [action],
+                num_boards=history_obj.num_boards
+            )
+            value = maxmin(new_history, True)
+            best_value = min(best_value, value)
+
+    # Cache the result
+    board_positions_val_dict[board_key] = best_value
+    return best_value
     # TODO implement
     return -2
     # TODO implement
