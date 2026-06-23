@@ -1,5 +1,9 @@
 #include <iostream>
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+#include "chess/include/chess.hpp"
+
+int main()
+{
+    chess::Board board;
+
+    std::cout << board.getFen() << '\n';
 }

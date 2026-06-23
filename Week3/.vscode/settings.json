@@ -1,7 +1,0 @@
-{
-    "launch": {
-        "configurations": [],
-        "compounds": []
-    },
-    "debug.defaultConfiguration": "C/C++: g++.exe build and debug active file"
-}
