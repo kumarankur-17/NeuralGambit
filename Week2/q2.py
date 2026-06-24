@@ -261,7 +261,7 @@ def maxmin(history_obj, max_player_flag):
         return history_obj.get_value_given_terminal_history()
 
     # Check memo table using board state (not history)
-    board_key = history_obj.get_boards_str()
+    board_key = history_obj.get_boards_str() + ('1' if max_player_flag else '0')
     if board_key in board_positions_val_dict:
         return board_positions_val_dict[board_key]
 
