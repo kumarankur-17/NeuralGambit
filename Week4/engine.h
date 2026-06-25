@@ -19,6 +19,8 @@ public:
         int moveTimeMs
     );
 
+    chess::Move bestCompletedMove;
+    
     long long getNodes() const;
 
 private:

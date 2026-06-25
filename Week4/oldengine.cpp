@@ -1,4 +1,4 @@
-#include "engine.h"
+#include "Engine.h"
 
 #include <algorithm>
 
@@ -46,23 +46,6 @@ static constexpr int bishopTable[64] =
 static inline int mirror(int sq)
 {
     return sq ^ 56;
-}
-
-static inline int PawnAdvanceBonus(int rank)
-{
-    static constexpr int bonus[8] =
-    {
-        0,
-        10,
-        20,
-        40,
-        60,
-        80,
-        120,
-        0
-    };
-
-    return bonus[rank];
 }
 
 void Engine::newGame()
@@ -137,19 +120,9 @@ int Engine::evaluate(const chess::Board& board) const
             score += sign * 100;
 
             if (color == chess::Color::WHITE)
-            {
                 score += sign * pawnTable[sq];
-
-                int rank = sq / 8;
-                score += sign * PawnAdvanceBonus(rank);
-            }
             else
-            {
                 score += sign * pawnTable[mirror(sq)];
-
-                int rank = 7 - (sq / 8);
-                score += sign * PawnAdvanceBonus(rank);
-            }
         }
 
         auto knights =
@@ -187,34 +160,13 @@ int Engine::evaluate(const chess::Board& board) const
             else
                 score += sign * bishopTable[mirror(sq)];
         }
-        if (board.pieces(chess::PieceType::BISHOP,color).count() >= 2)
-        {
-            score += sign * 30;
-        }
-
-        auto rooks =
-            board.pieces(
-                chess::PieceType::ROOK,
-                color
-            );
 
         score += sign * 500 *
-            static_cast<int>(rooks.count());
-
-        while (rooks)
-        {
-            int sq = rooks.pop();
-
-            int rank = sq / 8;
-
-            if (
-                (color == chess::Color::WHITE && rank >= 6) ||
-                (color == chess::Color::BLACK && rank <= 1)
-            )
-            {
-                score += sign * 15;
-            }
-        }
+            static_cast<int>(
+                board.pieces(
+                    chess::PieceType::ROOK,
+                    color
+                ).count());
 
         score += sign * 900 *
             static_cast<int>(
@@ -222,27 +174,6 @@ int Engine::evaluate(const chess::Board& board) const
                     chess::PieceType::QUEEN,
                     color
                 ).count());
-
-        auto king =
-            board.pieces(
-                chess::PieceType::KING,
-                color
-            );
-
-        if (king)
-        {
-            int sq = king.pop();
-
-            int rank = sq / 8;
-
-            if (
-                (color == chess::Color::WHITE && rank < 2) ||
-                (color == chess::Color::BLACK && rank > 5)
-            )
-            {
-                score += sign * 20;
-            }
-        }
     }
 
     return
@@ -392,11 +323,6 @@ int Engine::quiescence(
     int ply
 )
 {
-    if (timeUp())
-    {
-        stopSearch = true;
-        return alpha;
-    }
     ++nodes;
 
     int standPat = evaluate(board);
@@ -408,13 +334,6 @@ int Engine::quiescence(
 
     chess::Movelist moves;
     chess::movegen::legalmoves(moves, board);
-
-    scoreMoves(
-        board,
-        moves,
-        ply,
-        chess::Move::NO_MOVE
-    );
 
     for (const auto& move : moves)
     {
@@ -453,7 +372,7 @@ int Engine::search(
     if (timeUp())
     {
         stopSearch = true;
-        return alpha;
+        return 0;
     }
 
     ++nodes;
